@@ -24,10 +24,10 @@ public class UserController {
         return userRepo.findAllByOrderByUserNameAsc();
     }
 
-/*
+    /*
     Returns a list of ACTIVE users regardless of the pathvariable unless the pathvariable is specifically "false".
     If the pathvariable is missing, it will fail with a 400.
- */
+    */
     @GetMapping
     @RequestMapping("/active/{activeBoolean}")
     public List<User> activeUsers(@PathVariable String activeBoolean) {
@@ -36,7 +36,7 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<?> addUser(@RequestBody User user) throws Exception {
+    public ResponseEntity<?> addUser(@RequestBody User user) {
         user.setUserName(user.getUserName().toLowerCase());
         user.setEmail(user.getEmail().toLowerCase());
         user.setDateCreated(LocalDateTime.now());
@@ -77,21 +77,13 @@ public class UserController {
     @GetMapping
     @RequestMapping("/available/userName/{userName}")
     public Boolean userNameAvailable(@PathVariable String userName) {
-        boolean available = false;
-        if (userRepo.getReferenceByUserName(userName.toLowerCase()) == null) {
-            available = true;
-        }
-        return available;
+        return userRepo.getReferenceByUserName(userName.toLowerCase()) == null;
     }
 
     @GetMapping
     @RequestMapping("/available/email/{email}")
     public Boolean emailAvailable(@PathVariable String email) {
-        boolean available = false;
-        if (userRepo.getReferenceByEmail(email.toLowerCase()) == null) {
-            available = true;
-        }
-        return available;
+        return userRepo.getReferenceByEmail(email.toLowerCase()) == null;
     }
 
     @GetMapping
@@ -109,21 +101,22 @@ public class UserController {
     }
 
     @RequestMapping(value = "/updateUser/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<?> updateUserById(@PathVariable Long id, @RequestBody User user) throws Exception {
+    public ResponseEntity<?> updateUserById(@PathVariable Long id, @RequestBody User user) {
         User existingUser = userRepo.getReferenceById(id);
-        user.setUserName(user.getUserName().toLowerCase());
-        user.setEmail(user.getEmail().toLowerCase());
-        List<User> allOtherUsersEmail = userRepo.findAll();
-        allOtherUsersEmail.removeIf(u -> Objects.equals(u.getId(), id));
-        List<User> AllOtherUsersUserName = new ArrayList<>(allOtherUsersEmail);
-        allOtherUsersEmail.removeIf(u -> !Objects.equals(u.getEmail(), user.getEmail()));
-        AllOtherUsersUserName.removeIf(u -> !Objects.equals(u.getUserName(), user.getUserName()));
-        if (allOtherUsersEmail.size() == 0 && AllOtherUsersUserName.size() == 0) {
-            BeanUtils.copyProperties(user, existingUser, "id");
-            userRepo.saveAndFlush(existingUser);
-            return new ResponseEntity<>(HttpStatus.OK);
+        if (id.equals(user.getId())) {
+            user.setUserName(user.getUserName().toLowerCase());
+            user.setEmail(user.getEmail().toLowerCase());
+            List<User> allOtherUsersEmail = userRepo.findAll();
+            allOtherUsersEmail.removeIf(u -> Objects.equals(u.getId(), id));
+            List<User> AllOtherUsersUserName = new ArrayList<>(allOtherUsersEmail);
+            allOtherUsersEmail.removeIf(u -> !Objects.equals(u.getEmail(), user.getEmail()));
+            AllOtherUsersUserName.removeIf(u -> !Objects.equals(u.getUserName(), user.getUserName()));
+            if (allOtherUsersEmail.size() == 0 && AllOtherUsersUserName.size() == 0) {
+                BeanUtils.copyProperties(user, existingUser, "id");
+                userRepo.saveAndFlush(existingUser);
+                return new ResponseEntity<>(HttpStatus.OK);
+            }
         }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
-
 }

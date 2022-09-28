@@ -3,13 +3,15 @@ package com.petermenice.Peter.Menice.controllers;
 import com.petermenice.Peter.Menice.entities.Subscription;
 import com.petermenice.Peter.Menice.entities.User;
 import com.petermenice.Peter.Menice.repos.SubscriptionRepo;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/subs")
@@ -20,7 +22,7 @@ public class SubscriptionController {
 
     @GetMapping
     public List<Subscription> subscriptionList() {
-        return subscriptionRepo.findAll();
+        return subscriptionRepo.findAllByOrderByNameAsc();
     }
 
     @GetMapping
@@ -29,20 +31,47 @@ public class SubscriptionController {
         return subscriptionRepo.getReferenceById(id);
     }
 
+    /*
+    Returns a list of ACTIVE subscriptions regardless of the pathvariable unless the pathvariable is specifically "false".
+    If the pathvariable is missing, it will fail with a 400.
+    */
+    @GetMapping
+    @RequestMapping("/active/{activeBoolean}")
+    public List<Subscription> activeSubscriptions(@PathVariable String activeBoolean) {
+        boolean a = !activeBoolean.equalsIgnoreCase("false");
+        return subscriptionRepo.findAllByActive(a);
+    }
+
     @PostMapping
     public ResponseEntity<?> addUser(@RequestBody Subscription subscription) throws Exception {
         List<Subscription> allSubscriptions = subscriptionRepo.findAll();
         for (Subscription s : allSubscriptions) {
-            if (s.getName().equalsIgnoreCase(subscription.getName())) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-            if (s.getId().equals(subscription.getId())) {
+            if (s.getName().equalsIgnoreCase(subscription.getName())
+            || s.getDescription().equalsIgnoreCase(subscription.getDescription())) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
         }
-        subscription.setName(subscription.getName().toLowerCase());
         subscription.setActive(true);
         subscriptionRepo.saveAndFlush(subscription);
         return new ResponseEntity(HttpStatus.CREATED);
+    }
+
+    @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
+    public ResponseEntity<?> updateSubscriptionById(@PathVariable Long id, @RequestBody Subscription subscription) {
+        Subscription existingSub = subscriptionRepo.getReferenceById(subscription.getId());
+        if (id.equals(subscription.getId())) {
+            List<Subscription> allOtherSubId = subscriptionRepo.findAll();
+            allOtherSubId.removeIf(s -> Objects.equals(s.getId(), subscription.getId()));
+            List<Subscription> allOtherSubName = new ArrayList<>(allOtherSubId);
+            List<Subscription> allOtherSubDescription = new ArrayList<>(allOtherSubId);
+            allOtherSubName.removeIf(s -> !Objects.equals(s.getName().toLowerCase(), subscription.getName().toLowerCase()));
+            allOtherSubDescription.removeIf(s -> !Objects.equals(s.getDescription().toLowerCase(), subscription.getDescription().toLowerCase()));
+            if (allOtherSubName.size() == 0 && allOtherSubDescription.size() == 0) {
+                BeanUtils.copyProperties(subscription, existingSub, "id");
+                subscriptionRepo.saveAndFlush(existingSub);
+                return new ResponseEntity<>(HttpStatus.OK);
+            }
+        }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 }
