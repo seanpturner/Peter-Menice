@@ -2,15 +2,12 @@ package com.petermenice.Peter.Menice.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity(name="users")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class Users {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -31,8 +28,7 @@ public class Users {
     private String city;
     private String state;
     private String zip;
-    private String[] subscriptions;
-//    private Object[] trackedClicks;
+    private Integer[] subscriptions;
 
     public Long getId() {
         return id;
@@ -178,19 +174,11 @@ public class Users {
         this.zip = zip;
     }
 
-    public String[] getSubscriptions() {
+    public Integer[] getSubscriptions() {
         return subscriptions;
     }
 
-    public void setSubscriptions(String[] subscriptions) {
+    public void setSubscriptions(Integer[] subscriptions) {
         this.subscriptions = subscriptions;
     }
-
-//    public Object[] getTrackedClicks() {
-//        return trackedClicks;
-//    }
-//
-//    public void setTrackedClicks(Object[] trackedClicks) {
-//        this.trackedClicks = trackedClicks;
-//    }
 }
