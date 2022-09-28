@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/users")
@@ -36,22 +37,13 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<?> addUser(@RequestBody User user) throws Exception {
-        List<User> allUsers = userRepo.findAll();
-        for (User u : allUsers) {
-            if (u.getUserName().equalsIgnoreCase(user.getUserName())) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-            if (u.getId().equals(user.getId())) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-            if (u.getEmail().equals(user.getEmail())) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-        }
         user.setUserName(user.getUserName().toLowerCase());
         user.setEmail(user.getEmail().toLowerCase());
         user.setDateCreated(LocalDateTime.now());
         user.setActive(true);
+        if (!userNameAvailable(user.getUserName()) || !emailAvailable(user.getEmail())) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
         userRepo.saveAndFlush(user);
         return new ResponseEntity(HttpStatus.CREATED);
     }
@@ -83,10 +75,20 @@ public class UserController {
     }
 
     @GetMapping
-    @RequestMapping("/available/{userName}")
+    @RequestMapping("/available/userName/{userName}")
     public Boolean userNameAvailable(@PathVariable String userName) {
         boolean available = false;
-        if (userRepo.getReferenceByUserName(userName) == null) {
+        if (userRepo.getReferenceByUserName(userName.toLowerCase()) == null) {
+            available = true;
+        }
+        return available;
+    }
+
+    @GetMapping
+    @RequestMapping("/available/email/{email}")
+    public Boolean emailAvailable(@PathVariable String email) {
+        boolean available = false;
+        if (userRepo.getReferenceByEmail(email.toLowerCase()) == null) {
             available = true;
         }
         return available;
@@ -107,10 +109,21 @@ public class UserController {
     }
 
     @RequestMapping(value = "/updateUser/{id}", method = RequestMethod.PUT)
-    public User updateUserById(@PathVariable Long id, @RequestBody User user) {
+    public ResponseEntity<?> updateUserById(@PathVariable Long id, @RequestBody User user) throws Exception {
         User existingUser = userRepo.getReferenceById(id);
-        BeanUtils.copyProperties(user, existingUser, "id");
-        return userRepo.saveAndFlush(existingUser);
+        user.setUserName(user.getUserName().toLowerCase());
+        user.setEmail(user.getEmail().toLowerCase());
+        List<User> allOtherUsersEmail = userRepo.findAll();
+        allOtherUsersEmail.removeIf(u -> Objects.equals(u.getId(), id));
+        List<User> AllOtherUsersUserName = new ArrayList<>(allOtherUsersEmail);
+        allOtherUsersEmail.removeIf(u -> !Objects.equals(u.getEmail(), user.getEmail()));
+        AllOtherUsersUserName.removeIf(u -> !Objects.equals(u.getUserName(), user.getUserName()));
+        if (allOtherUsersEmail.size() == 0 && AllOtherUsersUserName.size() == 0) {
+            BeanUtils.copyProperties(user, existingUser, "id");
+            userRepo.saveAndFlush(existingUser);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
 }
