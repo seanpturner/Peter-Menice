@@ -15,7 +15,7 @@ public class Tracking {
     private Long id;
     private LocalDateTime timestamp;
     private Long userId;
-    private String link;
+    private String target;
     private String ip;
     private String state;
 
@@ -43,12 +43,12 @@ public class Tracking {
         this.userId = userId;
     }
 
-    public String getLink() {
-        return link;
+    public String getTarget() {
+        return target;
     }
 
-    public void setLink(String link) {
-        this.link = link;
+    public void setTarget(String target) {
+        this.target = target;
     }
 
     public String getIp() {
