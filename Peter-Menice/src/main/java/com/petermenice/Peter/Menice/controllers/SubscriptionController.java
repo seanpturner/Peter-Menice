@@ -43,11 +43,11 @@ public class SubscriptionController {
     }
 
     @PostMapping
-    public ResponseEntity<?> addUser(@RequestBody Subscription subscription) throws Exception {
+    public ResponseEntity<?> addUser(@RequestBody Subscription subscription) {
         List<Subscription> allSubscriptions = subscriptionRepo.findAll();
         for (Subscription s : allSubscriptions) {
             if (s.getName().equalsIgnoreCase(subscription.getName())
-            || s.getDescription().equalsIgnoreCase(subscription.getDescription())) {
+                || s.getDescription().equalsIgnoreCase(subscription.getDescription())) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
         }
