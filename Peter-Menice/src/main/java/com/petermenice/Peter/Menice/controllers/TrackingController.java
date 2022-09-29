@@ -72,6 +72,6 @@ public class TrackingController {
     public ResponseEntity<?> addTracking(@RequestBody Tracking tracking) {
         tracking.setTimestamp(LocalDateTime.now());
         trackingRepo.saveAndFlush(tracking);
-        return new ResponseEntity(HttpStatus.CREATED);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 }
