@@ -43,7 +43,7 @@ public class SubscriptionController {
     }
 
     @PostMapping
-    public ResponseEntity<?> addUser(@RequestBody Subscription subscription) {
+    public ResponseEntity<?> addSub(@RequestBody Subscription subscription) {
         List<Subscription> allSubscriptions = subscriptionRepo.findAll();
         for (Subscription s : allSubscriptions) {
             if (s.getName().equalsIgnoreCase(subscription.getName())

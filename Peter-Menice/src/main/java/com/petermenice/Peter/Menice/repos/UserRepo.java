@@ -15,4 +15,5 @@ public interface UserRepo extends JpaRepository<User, Long> {
     List<User> findAllByBirthMonth(Integer month);
 
     List<User> findAllByOrderByUserNameAsc();
+
 }
